@@ -1,44 +1,36 @@
+Dhananjeyal S, [21-12-2021 16:38]
 pipeline {
     agent any
     stages {
-        stage('Tests') {
-            steps {
-//                 script {
-//                    docker.image('node:10-stretch').inside { c ->
-                        echo 'Building..'
-                        sh 'npm install'
-                        echo 'Testing..'
-                        sh 'npm test'
-//                         sh "docker logs ${c.id}"
-//                    }
-//                 }
+      stage("transaction Docker variables") {
+        steps {
+        script {
+        env.ECRREPOURI = "390911387803.dkr.ecr.us-east-2.amazonaws.com/my-docker-image"
+        env.DOCKERPUSHURL = "https://390911387803.dkr.ecr.us-east-2.amazonaws.com/my-docker-image"
+        env.TAG = "${env.BRANCH_NAME}" + "${BUILD_NUMBER}"
+        echo "Tag : ${env.TAG}"
+        env.IMAGE = "${env.ECRREPOURI}" + ":" + "${env.TAG}"
+                }
             }
         }
-        stage('Build and push docker image') {
-            steps {
-                script {
-                    def dockerImage = docker.build("antonml/node-demo:master")
-                    docker.withRegistry('', 'demo-docker') {
-                        dockerImage.push('master')
+      stage("Docker build") {
+                steps {
+                    sh """ 
+                        pwd
+                        cat Dockerfile
+                        docker build -t ${env.ECRREPOURI}:${env.TAG} .
+                    """
+                }
+            }
+      stage("Docker push to AWS ECR") {
+            steps{
+                script{
+                     sh("eval \$(aws2 ecr get-login --no-include-email)")
+                     docker.withRegistry("${env.DOCKERPUSHURL}", "ecr:ap-south-1:aws-creds") {
+                     docker.image("${env.IMAGE}").push()
                     }
                 }
             }
         }
-        stage('Deploy to remote docker host') {
-            environment {
-                DOCKER_HOST_CREDENTIALS = credentials('390911387803')
-            }
-            steps {
-                script {
-//                     sh 'docker login -u $DOCKER_HOST_CREDENTIALS_USR -p $DOCKER_HOST_CREDENTIALS_PSW 3.12.107.154'
-                    sh 'docker pull antonml/node-demo:master'
-                    sh 'docker stop node-demo'
-                    sh 'docker rm node-demo'
-                    sh 'docker rmi antonml/node-demo:current'
-                    sh 'docker tag antonml/node-demo:master antonml/node-demo:current'
-                    sh 'docker run -d --name node-demo -p 80:3000 antonml/node-demo:current'
-                }
-            }
-        }
-    }
+     }
 }
