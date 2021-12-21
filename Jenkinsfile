@@ -1,4 +1,3 @@
-Dhananjeyal S, [21-12-2021 16:38]
 pipeline {
     agent any
     stages {
