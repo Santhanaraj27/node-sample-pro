@@ -7,7 +7,6 @@ pipeline {
         env.ECRREPOURI = "390911387803.dkr.ecr.us-east-2.amazonaws.com/my-docker-image"
         env.DOCKERPUSHURL = "https://390911387803.dkr.ecr.us-east-2.amazonaws.com/my-docker-image"
         env.TAG = "${env.BRANCH_NAME}" + "${BUILD_NUMBER}"
-            env.IMAGE = "${"390911387803.dkr.ecr.us-east-2.amazonaws.com/my-docker-image"}" + "" + "${env.TAG}"
         echo "Tag : ${env.TAG}"
         env.IMAGE = "${env.ECRREPOURI}" + ":" + "${env.TAG}"
                 }
@@ -32,5 +31,15 @@ pipeline {
                 }
             }
         }
+	  stage("Docker deploy") {
+                steps {
+                    sh """ 
+                      sed -i 's@BUILD@'"${env.IMAGE}"'@' docker-compose.yml
+                      cat docker-compose.yaml
+                      docker-compose up -d
+                    """
+                }
+            }
+		
      }
 }
