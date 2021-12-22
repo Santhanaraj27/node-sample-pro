@@ -25,7 +25,7 @@ pipeline {
       stage("Docker push to AWS ECR") {
             steps{
                 script{
-                     sh("eval \$(aws2 ecr get-login --no-include-email)")
+                     sh("eval \$(aws ecr get-login --no-include-email)")
                      docker.withRegistry("${env.DOCKERPUSHURL}", "ecr.us-east-2:aws-creds") {
                          docker.image("${env.IMAGE}").push()
                     }
