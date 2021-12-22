@@ -26,7 +26,7 @@ pipeline {
             steps{
                 script{
                      sh("eval \$(aws2 ecr get-login --no-include-email)")
-                     docker.withRegistry("${env.DOCKERPUSHURL}", "ecr.us-east-2:aws-creds") {
+                     docker.withRegistry("${env.DOCKERPUSHURL}", "ecr:us-east-2:aws-creds") {
                          docker.image("${env.IMAGE}").push()
                     }
                 }
